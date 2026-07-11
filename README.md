@@ -19,28 +19,76 @@
 - **周报/OKR**：结合工作说明自动生成周报，配套 OKR 与阶段性复盘模板
 - **常用文档模板**：会议纪要、简历、求职记录等
 - **AI Agent 技能库**：预置一组 Claude Code Skills，覆盖记忆、笔记、周报、仓库维护等场景
+- **Agent Hooks 自检**：`.claude/hooks/` 里的 Claude Code hooks 会自动检测"改了笔记/文档但忘了更新记忆"的情况并提醒，见 [CLAUDE.md](CLAUDE.md#自进化机制agent-hooks)
 
-## 快速开始
+## 安装指南
 
-### 1. 查看当前状态
+这个仓库同时准备了两份指令文件：`CLAUDE.md`（Claude Code 专用）和 `AGENTS.md`（通用约定，Codex CLI、opencode 等主流 Agent 工具都会自动读取同名文件）。理论上任何支持"项目级指令文件"的 Agent 工具，把它指向这个仓库根目录就能直接工作。
+
+### 1. 拿到这份仓库
+
+```bash
+git clone git@github.com:ZAKLLL/ezagent.git my-digital-twin
+cd my-digital-twin
+```
+
+如果想要一份不带原仓库 Git 历史的干净副本（比如你要重新 init 成自己的仓库）：
+
+```bash
+npx degit ZAKLLL/ezagent my-digital-twin
+cd my-digital-twin && git init
+```
+
+### 2. 选一个 Agent 工具打开它
+
+#### Claude Code
+```bash
+npm install -g @anthropic-ai/claude-code
+cd my-digital-twin
+claude
+```
+自动读取根目录 `CLAUDE.md`；`.agents/skills/` 下的技能会在执行 `./agent_stats.sh` 时自动软链接到 `~/.claude/skills/`，无需手动配置。
+
+#### Codex CLI（OpenAI）
+```bash
+npm install -g @openai/codex
+# 或：curl -fsSL https://chatgpt.com/codex/install.sh | sh
+cd my-digital-twin
+codex
+```
+Codex 会自动读取根目录 `AGENTS.md` 作为项目指令。
+
+#### opencode
+```bash
+curl -fsSL https://opencode.ai/install | bash
+# 或：npm i -g opencode-ai@latest
+cd my-digital-twin
+opencode
+```
+opencode 同样读取 `AGENTS.md`。
+
+#### 其他 Agent Harness（通用方式）
+只要你的工具支持读取 `AGENTS.md`（目前事实上的通用约定），把它指向本仓库根目录即可。如果你的工具用的是别的文件名（如某些工具的 `.rules`/自定义配置），把 `AGENTS.md` 的内容复制过去即可，内容本身与工具无关。
+
+### 3. 确认环境正常
+
 ```bash
 ./agent_stats.sh
 ```
-显示记忆/笔记/书签统计和 Git 状态，同时自动把 `.agents/skills/` 下的技能软链接到 `~/.claude/skills/`。
+显示记忆/笔记/书签统计和 Git 状态。
 
-### 2. 记录一条记忆
+## 首次使用
+
+### 记录一条记忆
 ```bash
 ./memory_add.sh
 ```
 
-### 3. 搜索记忆
+### 搜索记忆
 ```bash
 ./memory_search.sh 关键词
 ./memory_search.sh -r 7   # 最近 7 天
 ```
-
-### 4. 用 Claude Code 打开本仓库
-在仓库根目录启动 Claude Code，它会自动读取 `CLAUDE.md` 了解行为准则，并可以调用 `.agents/skills/` 下的技能（如 `/jvs` 快速入口）。
 
 ## 目录结构
 
@@ -59,6 +107,8 @@ ezagent/
 ├── lib/                # agent_stats.sh 依赖的 Shell 函数库
 ├── .agents/skills/     # AI Agent 技能定义（SKILL.md）
 ├── .claude/skills/     # 技能镜像，软链接自 .agents/skills/
+├── .claude/hooks/      # Agent Hooks 脚本（记忆自检）
+├── .claude/settings.json  # Hooks 注册配置
 ├── .githooks/          # 提交前记忆检查等 Git hooks
 └── *.sh                # 核心脚本
 ```

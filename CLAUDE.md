@@ -114,6 +114,16 @@ Context:
 
 记忆内容要求：说明做了什么、为什么做、产出是什么，不写流水账。
 
+## 自进化机制：Agent Hooks
+
+`.claude/settings.json` + `.claude/hooks/` 配置了三个 Claude Code hook，用来兜底"忘了更新记忆"的情况，不依赖 Agent 自觉遵守上面的规则：
+
+- **SessionStart**（`session-start-memory-check.sh`）：会话开始时检查最新一条记忆的日期，超过 3 天没更新会作为上下文提醒 Agent。
+- **PostToolUse**（`track-core-touch.sh`，匹配 `Edit|Write|NotebookEdit|Bash`）：记录本次会话是否改动了 `notes/`、`work/` 下的文件，以及是否调用过 `./memory_add.sh`。
+- **Stop**（`nudge-memory-update.sh`）：会话结束时，如果检测到改了核心目录但没跑 `memory_add.sh`，通过 `systemMessage` 提醒用户（只展示给用户，不进入模型上下文，不会强迫 Agent 继续对话）。
+
+这套机制依赖 `jq`；未安装时 hook 会静默跳过，不影响正常使用。想改成更强的阻断式提醒，把 `nudge-memory-update.sh` 里的 `systemMessage` 换成 `decision: "block"` 即可，但要注意 Stop hook 的强制继续会有 8 次连续拦截的上限。
+
 ## 可用技能
 
 - `jvs` - 快速入口，进入仓库、加载记忆、准备接受任务
