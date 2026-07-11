@@ -1,0 +1,16 @@
+# 真实密钥配置（不提交，只保留 .example.json 模板）
+config/llm_provider/*.json
+!config/llm_provider/*.example.json
+
+# macOS
+.DS_Store
+
+# 编辑器
+.vscode/
+.idea/
+
+# 临时文件
+*.tmp
+*.temp
+*.bak
+*~

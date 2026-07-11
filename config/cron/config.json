@@ -1,0 +1,13 @@
+{
+  "jobs": [
+    {
+      "name": "weekly_report_reminder",
+      "script": "weekly_report_reminder.sh",
+      "cron_expr": "0 17 * * 5",
+      "enabled": false,
+      "description": "每周五 17:00 提醒填写周报",
+      "created_at": "2026-01-01",
+      "last_run": null
+    }
+  ]
+}

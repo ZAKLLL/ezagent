@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# Git post-merge hook
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+echo -e "${BLUE}━━━━━━ 数字分身 post-merge Hook ━━━━━━${NC}"
+echo ""
+
+HOSTNAME=$(hostname)
+UNAME_S=$(uname -s 2>/dev/null)
+
+echo -e "${GREEN}✓ Pull 完成${NC}"
+echo "  主机名: ${HOSTNAME}"
+echo "  操作系统: ${UNAME_S}"
+echo ""
+echo -e "${CYAN}提示: 使用 './agent_stats.sh' 查看环境详细信息${NC}"
+echo ""
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+
+exit 0

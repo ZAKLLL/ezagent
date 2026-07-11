@@ -1,0 +1,229 @@
+#!/bin/bash
+
+# Git pre-commit hook - 数字分身提交前记忆检查
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+echo -e "${BLUE}━━━━━━ 数字分身提交前检查 ━━━━━━${NC}"
+echo ""
+
+MEMORY_MODE=$(git config --get hooks.memory.mode)
+if [ -z "$MEMORY_MODE" ]; then
+    MEMORY_MODE="smart"
+fi
+
+TODAY=$(date +%Y_%m_%d)
+MEMORY_DIR="memory"
+MEMORY_FILE="$MEMORY_DIR/mem_$TODAY.md"
+
+MEMORY_EXISTS=false
+if [ -f "$MEMORY_FILE" ]; then
+    LINE_COUNT=$(wc -l < "$MEMORY_FILE" 2>/dev/null || echo "0")
+    if [ "$LINE_COUNT" -gt 20 ]; then
+        MEMORY_EXISTS=true
+    fi
+fi
+
+CHANGED_FILES=$(git diff --cached --name-only | wc -l)
+ADDED_FILES=$(git diff --cached --diff-filter=A --name-only | wc -l | tr -d ' ')
+MODIFIED_FILES=$(git diff --cached --diff-filter=M --name-only | wc -l | tr -d ' ')
+DELETED_FILES=$(git diff --cached --diff-filter=D --name-only | wc -l | tr -d ' ')
+
+check_requires_memory() {
+    local requires=false
+
+    if [ "$CHANGED_FILES" -gt 5 ]; then
+        requires=true
+        REASON="大量文件变更 ($CHANGED_FILES 个文件)"
+    fi
+
+    if echo "$CHANGED_FILE_LIST" | grep -E '\.(md|txt|json|yaml|yml)$' > /dev/null; then
+        requires=true
+        REASON="新增或修改文档/配置文件"
+    fi
+
+    if echo "$CHANGED_FILE_LIST" | grep -E '^(notes|memory|work)/' > /dev/null; then
+        requires=true
+        REASON="变更核心目录内容"
+    fi
+
+    if [ "$DELETED_FILES" -gt 0 ]; then
+        requires=true
+        REASON="删除文件操作"
+    fi
+
+    if echo "$CHANGED_FILE_LIST" | grep -q 'README'; then
+        requires=true
+        REASON="文档更新"
+    fi
+
+    echo "$requires:$REASON"
+}
+
+echo ""
+echo -e "${CYAN}━━━━━━ 记忆系统检查 ━━━━━━${NC}"
+echo ""
+
+get_changes_summary() {
+    local summary=""
+    if [ "$ADDED_FILES" -gt 0 ]; then
+        summary="${summary}新增: ${ADDED_FILES} 文件, "
+    fi
+    if [ "$MODIFIED_FILES" -gt 0 ]; then
+        summary="${summary}修改: ${MODIFIED_FILES} 文件, "
+    fi
+    if [ "$DELETED_FILES" -gt 0 ]; then
+        summary="${summary}删除: ${DELETED_FILES} 文件"
+    fi
+    echo "$summary" | sed 's/, $//'
+}
+
+CHANGES_SUMMARY=$(get_changes_summary)
+CHANGED_FILE_LIST=$(git diff --cached --name-only)
+
+case "$MEMORY_MODE" in
+    strict)
+        echo -e "${YELLOW}⚠ 模式: 强制模式 - 提交前必须添加记忆${NC}"
+        echo ""
+
+        if [ -f "$MEMORY_FILE" ]; then
+            if grep -qE "^变更:|^## 提交前记录" "$MEMORY_FILE" 2>/dev/null; then
+                echo -e "${RED}✗ 今天的记忆只有自动统计，请手动添加有意义内容${NC}"
+                echo -e "${CYAN}  执行: ./memory_add.sh${NC}"
+                echo ""
+                read -p "已添加有意义记忆？(y/n): " -n 1 -r
+                echo
+                if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+                    echo "请先添加记忆，再提交"
+                    exit 1
+                fi
+            else
+                echo -e "${GREEN}✓ 今天已有记忆记录${NC}"
+            fi
+        else
+            echo -e "${RED}✗ 今天还没有记忆记录${NC}"
+            echo -e "${CYAN}  执行: ./memory_add.sh 添加记忆${NC}"
+            echo ""
+            read -p "已添加记忆？(y/n): " -n 1 -r
+            echo
+            if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+                echo "请先添加记忆，再提交"
+                exit 1
+            fi
+        fi
+        ;;
+
+    prompt)
+        echo -e "${CYAN}模式: 提示模式 - 询问是否添加记忆${NC}"
+        echo ""
+
+        if [ -f "$MEMORY_FILE" ]; then
+            if grep -qE "^变更:|^## 提交前记录" "$MEMORY_FILE" 2>/dev/null; then
+                echo -e "${YELLOW}⚠ 今天的记忆只包含自动统计${NC}"
+            else
+                echo -e "${GREEN}✓ 今天已有记忆记录${NC}"
+            fi
+        else
+            echo -e "${YELLOW}⚠ 今天还没有记忆记录${NC}"
+        fi
+
+        echo ""
+        echo -e "${CYAN}是否需要添加记忆？${NC}"
+        echo "  y - 现在添加（会暂停）"
+        echo "  n - 跳过，继续提交"
+        echo ""
+        read -p "选择 (y/n): " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            echo ""
+            echo -e "${CYAN}请运行: ./memory_add.sh${NC}"
+            echo ""
+            read -p "已添加记忆？按 Enter 继续..."
+        fi
+        ;;
+
+    smart)
+        echo -e "${CYAN}模式: 智能模式 - 仅提示，不自动写入${NC}"
+        echo ""
+
+        if [ -f "$MEMORY_FILE" ]; then
+            if grep -qE "^变更:|^## 提交前记录" "$MEMORY_FILE" 2>/dev/null; then
+                echo -e "${YELLOW}⚠ 今天的记忆只包含自动统计，建议手动添加有意义内容${NC}"
+                echo -e "${CYAN}  提示: 使用 ./memory_add.sh 记录有意义的内容${NC}"
+            else
+                echo -e "${GREEN}✓ 今天已有记忆记录${NC}"
+            fi
+        else
+            echo -e "${YELLOW}⚠ 今天还没有记忆记录${NC}"
+            echo -e "${CYAN}  提示: 使用 ./memory_add.sh 记录重要事件${NC}"
+        fi
+
+        MEMORY_CHECK=$(check_requires_memory)
+        REQUIRES_MEMORY=$(echo "$MEMORY_CHECK" | cut -d: -f1)
+        REASON=$(echo "$MEMORY_CHECK" | cut -d: -f2)
+
+        if [ "$REQUIRES_MEMORY" = true ]; then
+            echo ""
+            echo -e "${YELLOW}提示: 检测到重要变更 ($REASON)${NC}"
+            echo -e "${CYAN}       如需记录，请在提交后使用 ./memory_add.sh${NC}"
+        fi
+        ;;
+
+    *)
+        echo -e "${RED}✗ 未知的记忆模式: $MEMORY_MODE${NC}"
+        echo "可用模式: strict, prompt, smart"
+        echo "设置命令: git config hooks.memory.mode <mode>"
+        exit 1
+        ;;
+esac
+
+echo ""
+echo -e "${BLUE}━━━━━━ 安全检查 ━━━━━━${NC}"
+
+echo -e "${BLUE}检查敏感文件...${NC}"
+SENSITIVE_FILES=$(git diff --cached --name-only | grep -E '(\.key|\.pem|secret|password|api.*key)' || true)
+
+if [ -n "$SENSITIVE_FILES" ]; then
+    echo -e "${RED}警告: 发现可能的敏感文件:${NC}"
+    echo "$SENSITIVE_FILES"
+    echo ""
+    read -p "确认要提交这些文件吗？(y/n): " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "提交已取消"
+        exit 1
+    fi
+fi
+
+echo -e "${BLUE}检查大文件...${NC}"
+LARGE_FILES=$(git diff --cached --name-only | xargs -I {} sh -c 'stat -c %s "{}" 2>/dev/null || echo "0"' 2>/dev/null | awk '$1 > 512000 {print}' || true)
+
+if [ -n "$LARGE_FILES" ]; then
+    echo -e "${YELLOW}提示: 发现大文件 (>500KB)${NC}"
+    echo ""
+fi
+
+echo ""
+echo -e "${BLUE}━━━━━━ 提交摘要 ━━━━━━${NC}"
+echo "变更文件: $CHANGED_FILES"
+echo "  新增: $ADDED_FILES"
+echo "  修改: $MODIFIED_FILES"
+echo "  删除: $DELETED_FILES"
+
+if [ "$CHANGED_FILES" -gt 0 ]; then
+    echo ""
+    echo -e "${BLUE}主要变更:${NC}"
+    git diff --cached --stat | head -10
+fi
+
+echo ""
+echo -e "${GREEN}✓ 提交前检查通过${NC}"
+echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+echo ""
+
+exit 0
