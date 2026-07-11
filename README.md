@@ -131,7 +131,8 @@ ezagent/
 - [CLAUDE.md](CLAUDE.md) - Claude Code 行为准则与项目说明
 - [AGENTS.md](AGENTS.md) - 数字分身人格定义
 - [.agents/skills/](.agents/skills/) - 各技能的详细说明
+- [CONTRIBUTING.md](CONTRIBUTING.md) - 提交规范与贡献指南
 
 ## License
 
-按你自己的需要设置，本模板不预设 License。
+[MIT](LICENSE) — 随便用、随便改、随便发，不需要署名也不需要开源你的改动，唯一的要求是保留 LICENSE 文件里的版权声明。
