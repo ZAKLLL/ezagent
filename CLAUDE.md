@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 项目概述
 
-EzAgent - 通用白领数字分身模板，一个面向非技术、泛白领知识工作者的个人数字助手，用于管理日常工作中的记忆、笔记、周报和常用信息。
+EzAgent - AI 时代，你的数字分身。一个面向非技术个人用户的数字分身模板，用于管理日常工作中的记忆、笔记、周报和常用信息。
 
 **本质是一份结构化的个人知识库 / 上下文工程配置**（记忆约定、笔记分类、Agent Skills），不包含任何模型调用/推理编排代码，不是一个独立运行的 Agent 程序——需要交给 Claude Code 这类已具备推理能力的工具来读取和执行。
 

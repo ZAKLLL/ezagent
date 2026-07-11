@@ -1,6 +1,6 @@
-# EzAgent - 通用白领数字分身模板
+# EzAgent - AI 时代，你的数字分身
 
-一个面向非技术、泛白领知识工作者的个人数字助手模板：用 Markdown 文件 + Shell 脚本 + AI Agent 技能定义（Skills），驱动 Claude Code（或其他支持 Agent Skills 的工具）帮你管理记忆、笔记、周报和常用信息。
+一个面向非技术个人用户的数字分身模板：用 Markdown 文件 + Shell 脚本 + AI Agent 技能定义（Skills），驱动 Claude Code（或其他支持 Agent Skills 的工具）帮你管理记忆、笔记、周报和常用信息。
 
 不涉及编码/软件工程场景，开箱即用，也可以随时按自己的习惯调整。
 
